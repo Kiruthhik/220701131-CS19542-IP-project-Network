@@ -1,0 +1,47 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+<h1 class="text my-4">Following</h1>
+
+<div class="container">
+
+    <!-- Posts Section -->
+    {% for post in posts %}
+    <div class="card mb-3">
+        <div class="card-body">
+            <h5 class="card-title"><a href="{% url 'view_profile' post.posted_by.username %}" style="color:black;">{{post.posted_by.username}}</a></h5>
+            <p class="card-text">{{post.content}}</p>
+            <p class="card-text">
+                <small class="text-muted">{{post.time}}</small>
+            </p>
+            <div id="like-{{post.id}}">
+                {% if post.id in liked_posts %}
+                    <a href="#" class="text-danger" title="liked"  onclick="like({{post.id}})">❤️</a> {{post.liked_by.count}}
+                {% else %}
+                <a href="#" class="text-danger" title="like" onclick="like({{post.id}})">🩶</a> {{post.liked_by.count}}
+                {% endif %}
+            </div>
+            <p><a href="#" class="text-muted">Comment</a></p>
+        </div>
+    </div>
+    {% endfor %}
+
+</div>
+
+<script>
+    async function like(id){
+        event.preventDefault();
+        await fetch(`/likes/${id}`)
+        .then(response => response.json())
+        .then(status => {
+            if(status.liked){
+                document.getElementById(`like-${id}`).innerHTML = `<a href="#" class="text-danger" title="liked" onclick="like(${id})">❤️</a> ${status.likes} `
+            }
+            else{
+                document.getElementById(`like-${id}`).innerHTML = `<a href="#" class="text-danger" title="like" onclick="like(${id})">🩶</a> ${status.likes} `
+            }
+        })
+    }
+</script>
+
+{% endblock %}

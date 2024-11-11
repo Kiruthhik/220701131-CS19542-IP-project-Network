@@ -1,0 +1,103 @@
+{% extends "network/layout.html" %}
+
+{% block body %}
+
+<h1 class="text my-4">All Posts</h1>
+
+<div class="container">
+    <!-- New Post Section -->
+     {% if user.is_authenticated %}
+    <div class="card mb-4">
+        <div class="card-body">
+            <h5 class="card-title">New Post</h5>
+            <form action="{% url 'index' %}" method="POST">
+                {%csrf_token%}
+                <div class="form-group">
+                    <textarea class="form-control" rows="3" name="content" placeholder="Write something..."></textarea>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Post</button>
+            </form>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Posts Section -->
+    {% for post in posts %}
+    <div class="card mb-3" >
+        <div class="card-body">
+            <h5 class="card-title"><a href="{% url 'view_profile' post.posted_by.username %}" style="color:black;">{{post.posted_by.username}}</a></h5>
+            {% if post.posted_by.username == user.username %}
+                <a href="#" class="text-decoration-none" onclick="edit({{post.id}},`{{post.content | escapejs}}`,event)">Edit</a>
+            {% endif %}
+            <p class="card-text" id="{{post.id}}">{{post.content}}</p>
+            <p class="card-text">
+                <small class="text-muted">{{post.time}}</small>
+            </p>
+            <div id="like-{{post.id}}">
+                {% if post.id in liked_posts %}
+                    <a href="#" class="text-danger" title="liked" onclick="like({{post.id}})">❤️</a> {{post.liked_by.count}}
+                {% else %}
+                <a href="#" class="text-danger" title="like" onclick="like({{post.id}})">🩶</a> {{post.liked_by.count}}
+                {% endif %}
+            </div>
+
+            <p><a href="#" class="text-muted">Comment</a></p>
+        </div>
+    </div>
+    {% endfor %}
+    <div class="pagination">
+        <span class="step-links">
+            {% if posts.has_previous %}
+                <a href="?page=1"><button class="btn btn-light">&laquo; first</button></a>
+                <a href="?page={{ posts.previous_page_number }}"><button class="btn btn-light">previous</button></a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ posts.number }} of {{ posts.paginator.num_pages }}.
+            </span>
+
+            {% if posts.has_next %}
+                <a href="?page={{ posts.next_page_number }}"><button class="btn btn-light">next</button></a>
+                <a href="?page={{ posts.paginator.num_pages }}"><button class="btn btn-light">last &raquo;</button></a>
+            {% endif %}
+        </span>
+    </div>
+
+</div>
+
+<script>
+    function edit(id, content,event) {
+        event.preventDefault();
+        const actionurl = `{% url 'update_post' 0 %}`.replace("0",id);
+        document.getElementById(`${id}`).innerHTML = `
+            <form action="${actionurl}" method="POST">
+                {% csrf_token %}
+                <div class="form-group">
+                    <textarea class="form-control" rows="3" name="updated_content">${content}</textarea>
+                </div>
+                <button type="submit" class="btn btn-primary mt-2">Update</button>
+            </form>
+        `;
+    }
+
+
+    async function like(id){
+        event.preventDefault();
+        await fetch(`/likes/${id}`)
+        .then(response => response.json())
+        .then(status => {
+            if(status.liked){
+                document.getElementById(`like-${id}`).innerHTML = `<a href="#" class="text-danger" title="liked"  onclick="like(${id})">❤️</a> ${status.likes} `
+            }
+            else{
+                document.getElementById(`like-${id}`).innerHTML = `<a href="#" class="text-danger" title="like" onclick="like(${id})">🩶</a> ${status.likes} `
+            }
+        })
+    }
+
+</script>
+
+
+
+
+{% endblock %}
